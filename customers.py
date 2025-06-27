@@ -87,8 +87,8 @@ class CustomersPage(QWidget):
             self.table.setItem(r, 0, QTableWidgetItem(str(row["id"])))
             self.table.setItem(r, 1, QTableWidgetItem(row["name"]))
             self.table.setItem(r, 2, QTableWidgetItem(row["phone"] or ""))
-            self.table.setItem(r, 3, QTableWidgetItem(row.get("register_date", "")))
-            self.table.setItem(r, 4, QTableWidgetItem(row.get("last_visit_date", "")))
+            self.table.setItem(r, 3, QTableWidgetItem(row["register_date"] or ""))
+            self.table.setItem(r, 4, QTableWidgetItem(row["last_visit_date"] or ""))
             if show_balance:
                 self.table.setItem(r, 5, QTableWidgetItem(str(row["balance"])))
         if self.table.rowCount():
@@ -148,13 +148,13 @@ class CustomersPage(QWidget):
             "first_name": info["first_name"],
             "last_name": info["last_name"],
             "phone": info["phone"],
-            "address": info.get("address", ""),
-            "birth_date": info.get("birth_date", ""),
-            "register_date": info.get("register_date", ""),
-            "last_visit_date": info.get("last_visit_date", ""),
-            "referral": info.get("referral", ""),
-            "medical_history": info.get("medical_history", ""),
-            "extra_info": info.get("extra_info", ""),
+            "address": info["address"] or "",
+            "birth_date": info["birth_date"] or "",
+            "register_date": info["register_date"] or "",
+            "last_visit_date": info["last_visit_date"] or "",
+            "referral": info["referral"] or "",
+            "medical_history": info["medical_history"] or "",
+            "extra_info": info["extra_info"] or "",
             "therapies": [dict(t) for t in therapies],
         }
         dlg = CustomerDialog(data, self)
@@ -211,7 +211,7 @@ class CustomersPage(QWidget):
         customers = database.get_all_customers(self.balance_check.isChecked())
         text = "<h1>Customers</h1><ul>"
         for c in customers:
-            bal = c.get('balance')
+            bal = c["balance"] if "balance" in c.keys() else None
             bal_text = f" - Owe: {bal}" if bal is not None else ""
             text += f"<li>{c['name']} - {c['phone'] or ''}{bal_text}</li>"
         text += "</ul>"
