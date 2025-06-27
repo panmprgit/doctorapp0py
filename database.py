@@ -54,13 +54,38 @@ def initialize_database() -> None:
         """
     )
 
-    # Customers table
+    # Customers table with extended information
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS customers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            phone TEXT
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            phone TEXT,
+            address TEXT,
+            birth_date TEXT,
+            register_date TEXT,
+            last_visit_date TEXT,
+            referral TEXT,
+            medical_history TEXT,
+            extra_info TEXT
+        )
+        """
+    )
+
+    # Therapies table linked to customers
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS therapies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+            visit_date TEXT NOT NULL,
+            tooth TEXT,
+            description TEXT,
+            payment REAL DEFAULT 0,
+            cost REAL DEFAULT 0,
+            discount REAL DEFAULT 0,
+            comment TEXT
         )
         """
     )
@@ -136,42 +161,121 @@ def get_total_customers() -> int:
     return row["count"] if row else 0
 
 
-def get_all_customers() -> Iterable[sqlite3.Row]:
+def _customer_select_clause(show_balance: bool = False) -> str:
+    base = (
+        "SELECT c.id, c.first_name || ' ' || c.last_name AS name, c.phone, "
+        "c.register_date, c.last_visit_date"
+    )
+    if show_balance:
+        base += (
+            ", IFNULL(SUM(t.cost - t.payment - t.discount), 0) AS balance "
+            "FROM customers c LEFT JOIN therapies t ON c.id = t.customer_id"
+            " GROUP BY c.id"
+        )
+    else:
+        base += " FROM customers c"
+    return base + " ORDER BY c.last_name, c.first_name"
+
+
+def get_all_customers(show_balance: bool = False) -> Iterable[sqlite3.Row]:
     """Return all customers ordered by name."""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM customers ORDER BY name")
+    cur.execute(_customer_select_clause(show_balance))
     rows = cur.fetchall()
     conn.close()
     return rows
 
 
-def search_customers(keyword: str) -> Iterable[sqlite3.Row]:
+def search_customers(keyword: str, show_balance: bool = False) -> Iterable[sqlite3.Row]:
     """Return customers matching ``keyword`` in name or phone."""
     conn = get_connection()
     cur = conn.cursor()
     like = f"%{keyword}%"
-    cur.execute(
-        "SELECT * FROM customers WHERE name LIKE ? OR phone LIKE ? ORDER BY name",
-        (like, like),
-    )
+    query = _customer_select_clause(show_balance)
+    query = query.replace("FROM customers c", "FROM customers c")  # no-op to keep patch simple
+    query += " HAVING name LIKE ? OR c.phone LIKE ?" if show_balance else " WHERE name LIKE ? OR phone LIKE ?"
+    cur.execute(query, (like, like))
     rows = cur.fetchall()
     conn.close()
     return rows
 
 
-def add_customer(name: str, phone: str) -> None:
+def add_customer(
+    first_name: str,
+    last_name: str,
+    phone: str,
+    address: str,
+    birth_date: str,
+    register_date: str,
+    last_visit_date: str,
+    referral: str,
+    medical_history: str,
+    extra_info: str,
+) -> int:
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("INSERT INTO customers (name, phone) VALUES (?, ?)", (name, phone))
+    cur.execute(
+        """
+        INSERT INTO customers (
+            first_name, last_name, phone, address, birth_date,
+            register_date, last_visit_date, referral, medical_history, extra_info
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            first_name,
+            last_name,
+            phone,
+            address,
+            birth_date,
+            register_date,
+            last_visit_date,
+            referral,
+            medical_history,
+            extra_info,
+        ),
+    )
+    cid = cur.lastrowid
     conn.commit()
     conn.close()
+    return cid
 
 
-def update_customer(cid: int, name: str, phone: str) -> None:
+def update_customer(
+    cid: int,
+    first_name: str,
+    last_name: str,
+    phone: str,
+    address: str,
+    birth_date: str,
+    register_date: str,
+    last_visit_date: str,
+    referral: str,
+    medical_history: str,
+    extra_info: str,
+) -> None:
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE customers SET name = ?, phone = ? WHERE id = ?", (name, phone, cid))
+    cur.execute(
+        """
+        UPDATE customers SET first_name=?, last_name=?, phone=?, address=?,
+            birth_date=?, register_date=?, last_visit_date=?, referral=?,
+            medical_history=?, extra_info=? WHERE id=?
+        """,
+        (
+            first_name,
+            last_name,
+            phone,
+            address,
+            birth_date,
+            register_date,
+            last_visit_date,
+            referral,
+            medical_history,
+            extra_info,
+            cid,
+        ),
+    )
     conn.commit()
     conn.close()
 
@@ -180,6 +284,80 @@ def delete_customer(cid: int) -> None:
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("DELETE FROM customers WHERE id = ?", (cid,))
+    conn.commit()
+    conn.close()
+
+
+def get_customer(cid: int) -> Optional[sqlite3.Row]:
+    """Return a single customer by id."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM customers WHERE id = ?", (cid,))
+    row = cur.fetchone()
+    conn.close()
+    return row
+
+
+def get_customer_balance(cid: int) -> float:
+    """Return the outstanding balance for a customer."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT IFNULL(SUM(cost - payment - discount), 0) AS bal
+        FROM therapies WHERE customer_id = ?
+        """,
+        (cid,),
+    )
+    row = cur.fetchone()
+    conn.close()
+    return row["bal"] if row else 0.0
+
+
+def get_therapies(cid: int) -> Iterable[sqlite3.Row]:
+    """Return all therapy entries for a customer."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM therapies WHERE customer_id = ? ORDER BY visit_date",
+        (cid,),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return rows
+
+
+def add_therapy(
+    cid: int,
+    visit_date: str,
+    tooth: str,
+    description: str,
+    payment: float,
+    cost: float,
+    discount: float,
+    comment: str,
+) -> int:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO therapies (
+            customer_id, visit_date, tooth, description, payment,
+            cost, discount, comment
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (cid, visit_date, tooth, description, payment, cost, discount, comment),
+    )
+    tid = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return tid
+
+
+def delete_therapy(tid: int) -> None:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM therapies WHERE id = ?", (tid,))
     conn.commit()
     conn.close()
 
@@ -206,6 +384,11 @@ __all__ = [
     "add_customer",
     "update_customer",
     "delete_customer",
+    "get_customer",
+    "get_customer_balance",
+    "get_therapies",
+    "add_therapy",
+    "delete_therapy",
     "export_database",
     "import_database",
 ]
