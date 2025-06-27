@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QCheckBox,
     QStyle,
+    QHeaderView,
 )
 from PySide6.QtGui import QTextDocument
 from PySide6.QtPrintSupport import QPrinter
@@ -33,7 +34,7 @@ class CustomersPage(QWidget):
 
     def _create_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(8, 8, 8, 8)
 
         search_row = QHBoxLayout()
         search_row.setSpacing(6)
@@ -77,6 +78,7 @@ class CustomersPage(QWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.setAlternatingRowColors(True)
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setStyleSheet(
             "QTableWidget { border: 1px solid #404040; }"
             "QHeaderView::section { background-color: #353535; font-weight: bold; }"

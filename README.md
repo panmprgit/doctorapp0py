@@ -26,3 +26,9 @@ python main.py
 
 The application will create a local `data.db` SQLite database on first run.
 
+## UI Improvements
+
+The interface now features a modern dark theme and a sidebar layout with
+responsive tables. Therapy entries automatically resize so you no longer need
+to manually expand the tab when editing customers.
+
