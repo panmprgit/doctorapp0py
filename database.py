@@ -243,26 +243,58 @@ def add_customer(
 ) -> int:
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT INTO customers (
-            first_name, last_name, phone, address, birth_date,
-            register_date, last_visit_date, referral, medical_history, extra_info
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            first_name,
-            last_name,
-            phone,
-            address,
-            birth_date,
-            register_date,
-            last_visit_date,
-            referral,
-            medical_history,
-            extra_info,
-        ),
-    )
+    # Check if legacy ``name`` column exists so inserts don't fail on older
+    # databases that still require it.
+    cur.execute("PRAGMA table_info(customers)")
+    cols = {row[1] for row in cur.fetchall()}
+    has_name = "name" in cols
+
+    if has_name:
+        cur.execute(
+            """
+            INSERT INTO customers (
+                name, first_name, last_name, phone, address, birth_date,
+                register_date, last_visit_date, referral, medical_history,
+                extra_info
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                f"{first_name} {last_name}",
+                first_name,
+                last_name,
+                phone,
+                address,
+                birth_date,
+                register_date,
+                last_visit_date,
+                referral,
+                medical_history,
+                extra_info,
+            ),
+        )
+    else:
+        cur.execute(
+            """
+            INSERT INTO customers (
+                first_name, last_name, phone, address, birth_date,
+                register_date, last_visit_date, referral, medical_history,
+                extra_info
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                first_name,
+                last_name,
+                phone,
+                address,
+                birth_date,
+                register_date,
+                last_visit_date,
+                referral,
+                medical_history,
+                extra_info,
+            ),
+        )
+
     cid = cur.lastrowid
     conn.commit()
     conn.close()
@@ -284,26 +316,53 @@ def update_customer(
 ) -> None:
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        """
-        UPDATE customers SET first_name=?, last_name=?, phone=?, address=?,
-            birth_date=?, register_date=?, last_visit_date=?, referral=?,
-            medical_history=?, extra_info=? WHERE id=?
-        """,
-        (
-            first_name,
-            last_name,
-            phone,
-            address,
-            birth_date,
-            register_date,
-            last_visit_date,
-            referral,
-            medical_history,
-            extra_info,
-            cid,
-        ),
-    )
+    cur.execute("PRAGMA table_info(customers)")
+    cols = {row[1] for row in cur.fetchall()}
+    has_name = "name" in cols
+
+    if has_name:
+        cur.execute(
+            """
+            UPDATE customers SET name=?, first_name=?, last_name=?, phone=?, address=?,
+                birth_date=?, register_date=?, last_visit_date=?, referral=?,
+                medical_history=?, extra_info=? WHERE id=?
+            """,
+            (
+                f"{first_name} {last_name}",
+                first_name,
+                last_name,
+                phone,
+                address,
+                birth_date,
+                register_date,
+                last_visit_date,
+                referral,
+                medical_history,
+                extra_info,
+                cid,
+            ),
+        )
+    else:
+        cur.execute(
+            """
+            UPDATE customers SET first_name=?, last_name=?, phone=?, address=?,
+                birth_date=?, register_date=?, last_visit_date=?, referral=?,
+                medical_history=?, extra_info=? WHERE id=?
+            """,
+            (
+                first_name,
+                last_name,
+                phone,
+                address,
+                birth_date,
+                register_date,
+                last_visit_date,
+                referral,
+                medical_history,
+                extra_info,
+                cid,
+            ),
+        )
     conn.commit()
     conn.close()
 
