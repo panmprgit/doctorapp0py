@@ -17,6 +17,7 @@ class DashboardPage(QWidget):
 
     def _create_ui(self) -> None:
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
 
         header = QLabel("Dashboard")
         header.setStyleSheet(

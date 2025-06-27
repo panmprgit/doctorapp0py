@@ -75,6 +75,7 @@ class CustomerDialog(QDialog):
 
     def _create_ui(self) -> None:
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(6, 6, 6, 6)
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs)
         # Personal tab
@@ -116,6 +117,9 @@ class CustomerDialog(QDialog):
         self.therapy_table.setHorizontalHeaderLabels([
             "Date", "Tooth", "Description", "Payment", "Cost", "Discount", "Comment"
         ])
+        self.therapy_table.verticalHeader().setVisible(False)
+        self.therapy_table.horizontalHeader().setStretchLastSection(True)
+        self.therapy_table.setAlternatingRowColors(True)
         t_layout.addWidget(self.therapy_table)
         add_btn = QPushButton("Add Entry")
         add_btn.clicked.connect(self.add_therapy)

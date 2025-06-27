@@ -11,6 +11,7 @@ class ReportsPage(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
         layout.addWidget(QLabel("Reports"))
         layout.addStretch()
 

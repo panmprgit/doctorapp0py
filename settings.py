@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFileDialog,
     QMessageBox,
+    QStyle,
 )
 
 import database
@@ -32,19 +33,21 @@ class SettingsPage(QWidget):
         self.telephone_edit = QLineEdit()
 
         form = QFormLayout()
+        form.setVerticalSpacing(6)
         form.addRow("First Name", self.first_name_edit)
         form.addRow("Last Name", self.last_name_edit)
         form.addRow("Address", self.address_edit)
         form.addRow("Speciality", self.speciality_edit)
         form.addRow("Telephone", self.telephone_edit)
 
-        save_btn = QPushButton("Save")
+        style = self.style()
+        save_btn = QPushButton(style.standardIcon(QStyle.SP_DialogSaveButton), "Save")
         save_btn.clicked.connect(self.save_doctor_info)
 
-        export_btn = QPushButton("Export Database")
+        export_btn = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), "Export Database")
         export_btn.clicked.connect(self.export_database)
 
-        import_btn = QPushButton("Import Database")
+        import_btn = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), "Import Database")
         import_btn.clicked.connect(self.import_database)
 
         btn_row = QHBoxLayout()
@@ -54,6 +57,7 @@ class SettingsPage(QWidget):
         btn_row.addWidget(import_btn)
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
         layout.addLayout(form)
         layout.addStretch()
         layout.addLayout(btn_row)
