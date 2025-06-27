@@ -1,66 +1,90 @@
-import tkinter as tk
-from tkinter import ttk
+"""Doctor application entry point.
 
-class DashboardApp(tk.Tk):
-    def __init__(self):
+Installation:
+    pip install PySide6
+
+Run the application:
+    python main.py
+"""
+
+from __future__ import annotations
+
+import sys
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QHBoxLayout,
+    QVBoxLayout,
+    QWidget,
+    QPushButton,
+    QStackedWidget,
+)
+
+import database
+from dashboard import DashboardPage
+from transactions import TransactionsPage
+from reports import ReportsPage
+from settings import SettingsPage
+
+
+class MainWindow(QMainWindow):
+    """Main application window with sidebar navigation."""
+
+    def __init__(self) -> None:
         super().__init__()
-        self.title("Dashboard Main Window")
-        self.geometry("900x600")
-        self.resizable(False, False)
-        self.create_widgets()
+        self.setWindowTitle("Doctor App")
+        self.resize(800, 600)
+        self._setup_ui()
 
-    def create_widgets(self):
-        # Sidebar frame
-        sidebar = tk.Frame(self, bg="#2e3f4f", width=200, height=600)
-        sidebar.pack(side="left", fill="y")
+    def _setup_ui(self) -> None:
+        central = QWidget()
+        self.setCentralWidget(central)
 
-        # Sidebar buttons
+        root_layout = QHBoxLayout(central)
+
+        # Sidebar with navigation buttons
+        sidebar = QVBoxLayout()
+        root_layout.addLayout(sidebar)
+
+        self.stack = QStackedWidget()
+        root_layout.addWidget(self.stack, 1)
+
+        # Pages
+        self.dashboard_page = DashboardPage()
+        self.transactions_page = TransactionsPage()
+        self.reports_page = ReportsPage()
+        self.settings_page = SettingsPage()
+
+        self.stack.addWidget(self.dashboard_page)
+        self.stack.addWidget(self.transactions_page)
+        self.stack.addWidget(self.reports_page)
+        self.stack.addWidget(self.settings_page)
+
         buttons = [
-            ("Dashboard", self.show_dashboard),
-            ("Transactions", self.show_transactions),
-            ("Reports", self.show_reports),
-            ("Settings", self.show_settings)
+            ("Dashboard", self.dashboard_page),
+            ("Transactions", self.transactions_page),
+            ("Reports", self.reports_page),
+            ("Settings", self.settings_page),
         ]
-        for idx, (text, command) in enumerate(buttons):
-            btn = tk.Button(sidebar, text=text, command=command,
-                            bg="#374e63", fg="white", bd=0,
-                            font=("Segoe UI", 12), activebackground="#425d7a")
-            btn.place(x=0, y=40 * idx, width=200, height=40)
 
-        # Main content area
-        self.main_frame = tk.Frame(self, bg="#f4f4f4", width=700, height=600)
-        self.main_frame.pack(side="left", fill="both", expand=True)
+        for text, page in buttons:
+            btn = QPushButton(text)
+            btn.setFixedHeight(40)
+            btn.clicked.connect(lambda _, p=page: self.stack.setCurrentWidget(p))
+            sidebar.addWidget(btn)
 
-        self.show_dashboard()
+        sidebar.addStretch()
 
-    def clear_main(self):
-        for widget in self.main_frame.winfo_children():
-            widget.destroy()
 
-    def show_dashboard(self):
-        self.clear_main()
-        label = tk.Label(self.main_frame, text="Welcome to Your Dashboard!",
-                         font=("Segoe UI", 18, "bold"), bg="#f4f4f4")
-        label.pack(pady=40)
+def main() -> None:
+    """Application entry point."""
+    database.initialize_database()
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
 
-    def show_transactions(self):
-        self.clear_main()
-        label = tk.Label(self.main_frame, text="Transactions",
-                         font=("Segoe UI", 16, "bold"), bg="#f4f4f4")
-        label.pack(pady=40)
-
-    def show_reports(self):
-        self.clear_main()
-        label = tk.Label(self.main_frame, text="Reports",
-                         font=("Segoe UI", 16, "bold"), bg="#f4f4f4")
-        label.pack(pady=40)
-
-    def show_settings(self):
-        self.clear_main()
-        label = tk.Label(self.main_frame, text="Settings",
-                         font=("Segoe UI", 16, "bold"), bg="#f4f4f4")
-        label.pack(pady=40)
 
 if __name__ == "__main__":
-    app = DashboardApp()
-    app.mainloop()
+    main()
+
