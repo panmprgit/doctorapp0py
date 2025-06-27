@@ -189,7 +189,7 @@ def get_total_customers() -> int:
     return row["count"] if row else 0
 
 
-def _customer_select_clause(show_balance: bool = False) -> str:
+def _customer_select_clause(show_balance: bool = False, order_by: bool = True) -> str:
     base = (
         "SELECT c.id, c.first_name || ' ' || c.last_name AS name, c.phone, "
         "c.register_date, c.last_visit_date"
@@ -202,7 +202,9 @@ def _customer_select_clause(show_balance: bool = False) -> str:
         )
     else:
         base += " FROM customers c"
-    return base + " ORDER BY c.last_name, c.first_name"
+    if order_by:
+        base += " ORDER BY c.last_name, c.first_name"
+    return base
 
 
 def get_all_customers(show_balance: bool = False) -> Iterable[sqlite3.Row]:
@@ -220,9 +222,9 @@ def search_customers(keyword: str, show_balance: bool = False) -> Iterable[sqlit
     conn = get_connection()
     cur = conn.cursor()
     like = f"%{keyword}%"
-    query = _customer_select_clause(show_balance)
-    query = query.replace("FROM customers c", "FROM customers c")  # no-op to keep patch simple
+    query = _customer_select_clause(show_balance, order_by=False)
     query += " HAVING name LIKE ? OR c.phone LIKE ?" if show_balance else " WHERE name LIKE ? OR phone LIKE ?"
+    query += " ORDER BY c.last_name, c.first_name"
     cur.execute(query, (like, like))
     rows = cur.fetchall()
     conn.close()
