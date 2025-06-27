@@ -115,6 +115,16 @@ def get_upcoming_appointments(limit: int = 5) -> Iterable[sqlite3.Row]:
     return rows
 
 
+def get_total_customers() -> int:
+    """Return the number of unique customers based on appointments."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(DISTINCT patient_name) AS count FROM appointments")
+    row = cur.fetchone()
+    conn.close()
+    return row["count"] if row else 0
+
+
 def export_database(target_path: str | Path) -> None:
     """Copy the database file to ``target_path``."""
     shutil.copy(DB_FILE, target_path)
@@ -131,6 +141,7 @@ __all__ = [
     "get_doctor_info",
     "save_doctor_info",
     "get_upcoming_appointments",
+    "get_total_customers",
     "export_database",
     "import_database",
 ]
