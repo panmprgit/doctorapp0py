@@ -54,6 +54,17 @@ def initialize_database() -> None:
         """
     )
 
+    # Customers table
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            phone TEXT
+        )
+        """
+    )
+
     conn.commit()
     conn.close()
 
@@ -125,6 +136,54 @@ def get_total_customers() -> int:
     return row["count"] if row else 0
 
 
+def get_all_customers() -> Iterable[sqlite3.Row]:
+    """Return all customers ordered by name."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM customers ORDER BY name")
+    rows = cur.fetchall()
+    conn.close()
+    return rows
+
+
+def search_customers(keyword: str) -> Iterable[sqlite3.Row]:
+    """Return customers matching ``keyword`` in name or phone."""
+    conn = get_connection()
+    cur = conn.cursor()
+    like = f"%{keyword}%"
+    cur.execute(
+        "SELECT * FROM customers WHERE name LIKE ? OR phone LIKE ? ORDER BY name",
+        (like, like),
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return rows
+
+
+def add_customer(name: str, phone: str) -> None:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO customers (name, phone) VALUES (?, ?)", (name, phone))
+    conn.commit()
+    conn.close()
+
+
+def update_customer(cid: int, name: str, phone: str) -> None:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE customers SET name = ?, phone = ? WHERE id = ?", (name, phone, cid))
+    conn.commit()
+    conn.close()
+
+
+def delete_customer(cid: int) -> None:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM customers WHERE id = ?", (cid,))
+    conn.commit()
+    conn.close()
+
+
 def export_database(target_path: str | Path) -> None:
     """Copy the database file to ``target_path``."""
     shutil.copy(DB_FILE, target_path)
@@ -142,6 +201,11 @@ __all__ = [
     "save_doctor_info",
     "get_upcoming_appointments",
     "get_total_customers",
+    "get_all_customers",
+    "search_customers",
+    "add_customer",
+    "update_customer",
+    "delete_customer",
     "export_database",
     "import_database",
 ]
