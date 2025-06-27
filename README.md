@@ -5,10 +5,17 @@
 - Python 3.10+
 - [PySide6](https://pypi.org/project/PySide6/)
 
-Install dependencies:
+Install dependencies using the provided `requirements.txt`:
 
 ```bash
-pip install PySide6
+pip install -r requirements.txt
+```
+
+Alternatively, run the setup script to create a virtual environment and
+install everything automatically:
+
+```bash
+./setup.sh
 ```
 
 ## Running
