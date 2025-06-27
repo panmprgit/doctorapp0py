@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QFileDialog,
     QCheckBox,
+    QStyle,
 )
 from PySide6.QtGui import QTextDocument
 from PySide6.QtPrintSupport import QPrinter
@@ -32,24 +33,27 @@ class CustomersPage(QWidget):
 
     def _create_ui(self) -> None:
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         search_row = QHBoxLayout()
+        search_row.setSpacing(6)
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("Search by name or phone ...")
         self.search_edit.textChanged.connect(self.search_customers)
         self.balance_check = QCheckBox("Show Balance")
         self.balance_check.stateChanged.connect(self.search_customers)
 
-        add_btn = QPushButton("Add")
+        style = self.style()
+        add_btn = QPushButton(style.standardIcon(QStyle.SP_FileDialogNewFolder), "Add")
         add_btn.clicked.connect(self.add_customer)
 
-        edit_btn = QPushButton("Edit")
+        edit_btn = QPushButton(style.standardIcon(QStyle.SP_FileDialogContentsView), "Edit")
         edit_btn.clicked.connect(self.edit_customer)
 
-        delete_btn = QPushButton("Delete")
+        delete_btn = QPushButton(style.standardIcon(QStyle.SP_TrashIcon), "Delete")
         delete_btn.clicked.connect(self.delete_customer)
 
-        pdf_btn = QPushButton("Print PDF")
+        pdf_btn = QPushButton(style.standardIcon(QStyle.SP_DriveDVDIcon), "Print PDF")
         pdf_btn.clicked.connect(self.print_pdf)
 
         search_row.addWidget(self.search_edit)
@@ -70,6 +74,13 @@ class CustomersPage(QWidget):
         ])
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setAlternatingRowColors(True)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.setStyleSheet(
+            "QTableWidget { border: 1px solid #404040; }"
+            "QHeaderView::section { background-color: #353535; font-weight: bold; }"
+        )
 
         layout.addLayout(search_row)
         layout.addWidget(self.table)
