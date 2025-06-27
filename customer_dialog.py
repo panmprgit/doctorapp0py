@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QWidget,
+    QHeaderView,
+    QSizePolicy,
 )
 from PySide6.QtCore import QDate
 
@@ -74,9 +76,11 @@ class CustomerDialog(QDialog):
             self.load_data(data)
 
     def _create_ui(self) -> None:
+        self.resize(700, 500)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setContentsMargins(8, 8, 8, 8)
         self.tabs = QTabWidget()
+        self.tabs.setDocumentMode(True)
         layout.addWidget(self.tabs)
         # Personal tab
         personal = QWidget()
@@ -113,12 +117,15 @@ class CustomerDialog(QDialog):
         # Therapy tab
         therapy_tab = QWidget()
         t_layout = QVBoxLayout(therapy_tab)
+        t_layout.setContentsMargins(0, 0, 0, 0)
         self.therapy_table = QTableWidget(0, 7)
         self.therapy_table.setHorizontalHeaderLabels([
             "Date", "Tooth", "Description", "Payment", "Cost", "Discount", "Comment"
         ])
         self.therapy_table.verticalHeader().setVisible(False)
         self.therapy_table.horizontalHeader().setStretchLastSection(True)
+        self.therapy_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.therapy_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.therapy_table.setAlternatingRowColors(True)
         t_layout.addWidget(self.therapy_table)
         add_btn = QPushButton("Add Entry")

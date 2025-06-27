@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Doctor App")
-        self.resize(800, 600)
+        self.resize(1024, 768)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -68,9 +68,12 @@ class MainWindow(QMainWindow):
         root_layout.setContentsMargins(0, 0, 0, 0)
 
         # Sidebar with navigation buttons
-        sidebar = QVBoxLayout()
+        sidebar_widget = QWidget()
+        sidebar_widget.setFixedWidth(150)
+        sidebar = QVBoxLayout(sidebar_widget)
         sidebar.setSpacing(10)
-        root_layout.addLayout(sidebar)
+        sidebar.setContentsMargins(8, 8, 8, 8)
+        root_layout.addWidget(sidebar_widget)
 
         self.stack = QStackedWidget()
         root_layout.addWidget(self.stack, 1)
