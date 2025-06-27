@@ -28,7 +28,10 @@ The application will create a local `data.db` SQLite database on first run.
 
 ## UI Improvements
 
-The interface now features a modern dark theme and a sidebar layout with
-responsive tables. Therapy entries automatically resize so you no longer need
-to manually expand the tab when editing customers.
+The interface now ships with a polished look using a global Qt Style Sheet.
+A theme toggle allows switching between **dark** and **light** modes from the
+sidebar. Tables, forms and dialogs scale nicely with window size, and icons are
+used throughout the navigation buttons.
+
+![Dashboard Screenshot](docs/screenshot.png)
 

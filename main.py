@@ -20,35 +20,16 @@ from PySide6.QtWidgets import (
     QStackedWidget,
     QStyle,
 )
-from PySide6.QtGui import QPalette, QColor, QFont
-from PySide6.QtCore import Qt
+
 
 import database
 from dashboard import DashboardPage
 from customers import CustomersPage
 from reports import ReportsPage
 from settings import SettingsPage
+from style import apply_theme, Theme
 
 
-def apply_modern_style(app: QApplication) -> None:
-    """Apply a modern dark theme and font to the application."""
-    app.setStyle("Fusion")
-
-    palette = QPalette()
-    palette.setColor(QPalette.Window, QColor(53, 53, 53))
-    palette.setColor(QPalette.WindowText, Qt.white)
-    palette.setColor(QPalette.Base, QColor(35, 35, 35))
-    palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-    palette.setColor(QPalette.ToolTipBase, Qt.white)
-    palette.setColor(QPalette.ToolTipText, Qt.white)
-    palette.setColor(QPalette.Text, Qt.white)
-    palette.setColor(QPalette.Button, QColor(53, 53, 53))
-    palette.setColor(QPalette.ButtonText, Qt.white)
-    palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    palette.setColor(QPalette.HighlightedText, Qt.black)
-    app.setPalette(palette)
-
-    app.setFont(QFont("Segoe UI", 10))
 
 
 class MainWindow(QMainWindow):
@@ -58,6 +39,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Doctor App")
         self.resize(1024, 768)
+        self.current_theme = Theme.DARK
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -104,14 +86,32 @@ class MainWindow(QMainWindow):
             btn.clicked.connect(lambda _, p=page: self.stack.setCurrentWidget(p))
             sidebar.addWidget(btn)
 
+        # Theme toggle button
+        self.theme_btn = QPushButton("Light Mode")
+        self.theme_btn.clicked.connect(self._toggle_theme)
+        sidebar.addWidget(self.theme_btn)
+
         sidebar.addStretch()
+
+    def _toggle_theme(self) -> None:
+        """Switch between dark and light themes."""
+        app = QApplication.instance()
+        if not app:
+            return
+        if self.current_theme == Theme.DARK:
+            self.current_theme = Theme.LIGHT
+            self.theme_btn.setText("Dark Mode")
+        else:
+            self.current_theme = Theme.DARK
+            self.theme_btn.setText("Light Mode")
+        apply_theme(app, self.current_theme)
 
 
 def main() -> None:
     """Application entry point."""
     database.initialize_database()
     app = QApplication(sys.argv)
-    apply_modern_style(app)
+    apply_theme(app, Theme.DARK)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

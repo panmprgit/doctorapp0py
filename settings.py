@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QStyle,
 )
+from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtCore import QRegularExpression
 
 import database
 
@@ -27,10 +29,22 @@ class SettingsPage(QWidget):
 
     def _create_ui(self) -> None:
         self.first_name_edit = QLineEdit()
+        self.first_name_edit.setPlaceholderText("John")
+        self.first_name_edit.setToolTip("Doctor's first name")
         self.last_name_edit = QLineEdit()
+        self.last_name_edit.setPlaceholderText("Doe")
+        self.last_name_edit.setToolTip("Doctor's last name")
         self.address_edit = QLineEdit()
+        self.address_edit.setPlaceholderText("Street, City")
+        self.address_edit.setToolTip("Office address")
         self.speciality_edit = QLineEdit()
+        self.speciality_edit.setPlaceholderText("Dentist")
+        self.speciality_edit.setToolTip("Medical speciality")
         self.telephone_edit = QLineEdit()
+        self.telephone_edit.setPlaceholderText("123456789")
+        self.telephone_edit.setToolTip("Contact phone number")
+        phone_validator = QRegularExpressionValidator(QRegularExpression(r"^[0-9+\- ]{3,}$"))
+        self.telephone_edit.setValidator(phone_validator)
 
         form = QFormLayout()
         form.setVerticalSpacing(6)
