@@ -90,6 +90,34 @@ def initialize_database() -> None:
         """
     )
 
+    # Migrate older database schemas that used different customer fields.
+    # Collect existing column names and add any missing ones so that the
+    # application queries work without errors.
+    cur.execute("PRAGMA table_info(customers)")
+    columns = {row[1] for row in cur.fetchall()}
+    expected = {
+        "first_name": "TEXT",
+        "last_name": "TEXT",
+        "phone": "TEXT",
+        "address": "TEXT",
+        "birth_date": "TEXT",
+        "register_date": "TEXT",
+        "last_visit_date": "TEXT",
+        "referral": "TEXT",
+        "medical_history": "TEXT",
+        "extra_info": "TEXT",
+    }
+    for col, ctype in expected.items():
+        if col not in columns:
+            cur.execute(f"ALTER TABLE customers ADD COLUMN {col} {ctype}")
+            # Populate newly added first/last name columns from the legacy
+            # ``name`` field if present.
+            if col in {"first_name", "last_name"} and "name" in columns:
+                if col == "first_name":
+                    cur.execute("UPDATE customers SET first_name = name WHERE first_name IS NULL OR first_name = ''")
+                else:
+                    cur.execute("UPDATE customers SET last_name = '' WHERE last_name IS NULL")
+
     conn.commit()
     conn.close()
 
