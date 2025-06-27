@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 
 import database
 from dashboard import DashboardPage
-from transactions import TransactionsPage
+from customers import CustomersPage
 from reports import ReportsPage
 from settings import SettingsPage
 
@@ -51,18 +51,18 @@ class MainWindow(QMainWindow):
 
         # Pages
         self.dashboard_page = DashboardPage()
-        self.transactions_page = TransactionsPage()
+        self.customers_page = CustomersPage()
         self.reports_page = ReportsPage()
         self.settings_page = SettingsPage()
 
         self.stack.addWidget(self.dashboard_page)
-        self.stack.addWidget(self.transactions_page)
+        self.stack.addWidget(self.customers_page)
         self.stack.addWidget(self.reports_page)
         self.stack.addWidget(self.settings_page)
 
         buttons = [
             ("Dashboard", self.dashboard_page),
-            ("Transactions", self.transactions_page),
+            ("Customers", self.customers_page),
             ("Reports", self.reports_page),
             ("Settings", self.settings_page),
         ]
