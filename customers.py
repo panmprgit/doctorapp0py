@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QStyle,
     QHeaderView,
+    QDialog,
+    QDialogButtonBox,
 )
 from PySide6.QtGui import QTextDocument
 from PySide6.QtPrintSupport import QPrinter
@@ -22,6 +24,41 @@ from PySide6.QtPrintSupport import QPrinter
 from customer_dialog import CustomerDialog
 
 import database
+
+
+class PdfOptionsDialog(QDialog):
+    """Dialog allowing the user to choose which customer fields to include."""
+
+    FIELDS = [
+        ("phone", "Phone"),
+        ("address", "Address"),
+        ("birth_date", "Birth Date"),
+        ("register_date", "Register Date"),
+        ("last_visit_date", "Last Visit"),
+        ("referral", "Referral"),
+        ("medical_history", "Medical History"),
+        ("extra_info", "Extra Info"),
+    ]
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Select Fields")
+        layout = QVBoxLayout(self)
+        self.checks: dict[str, QCheckBox] = {}
+        for key, label in self.FIELDS:
+            cb = QCheckBox(label)
+            cb.setChecked(True)
+            self.checks[key] = cb
+            layout.addWidget(cb)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def selected_fields(self) -> list[str]:
+        """Return list of selected field keys."""
+        return [k for k, cb in self.checks.items() if cb.isChecked()]
 
 
 class CustomersPage(QWidget):
@@ -216,18 +253,46 @@ class CustomersPage(QWidget):
             self.search_customers()
 
     def print_pdf(self) -> None:
+        cid = self._selected_id()
+        if cid is None:
+            return
+
+        info = database.get_customer(cid)
+        if info is None:
+            return
+
+        options_dlg = PdfOptionsDialog(self)
+        if options_dlg.exec() != QDialog.Accepted:
+            return
+
         path, _ = QFileDialog.getSaveFileName(
-            self, "Save PDF", "customers.pdf", "PDF Files (*.pdf)"
+            self,
+            "Save PDF",
+            f"{info['first_name']}_{info['last_name']}.pdf",
+            "PDF Files (*.pdf)",
         )
         if not path:
             return
-        customers = database.get_all_customers(self.balance_check.isChecked())
-        text = "<h1>Customers</h1><ul>"
-        for c in customers:
-            bal = c["balance"] if "balance" in c.keys() else None
-            bal_text = f" - Owe: {bal}" if bal is not None else ""
-            text += f"<li>{c['name']} - {c['phone'] or ''}{bal_text}</li>"
+
+        selected = options_dlg.selected_fields()
+        labels = dict(PdfOptionsDialog.FIELDS)
+        text = f"<h1>{info['first_name']} {info['last_name']}</h1><ul>"
+        for field in selected:
+            value = info[field] or ""
+            text += f"<li><b>{labels[field]}:</b> {value}</li>"
         text += "</ul>"
+
+        doctor = database.get_doctor_info()
+        if doctor:
+            text += (
+                "<p style='margin-top:40px'>"
+                f"Doctor: {doctor['first_name']} {doctor['last_name']}<br>"
+                f"{doctor['speciality'] or ''}<br>"
+                f"{doctor['address'] or ''}<br>"
+                f"{doctor['telephone'] or ''}"
+                "</p>"
+            )
+
         doc = QTextDocument()
         doc.setHtml(text)
         printer = QPrinter()
